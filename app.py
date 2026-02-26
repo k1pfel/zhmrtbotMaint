@@ -12,7 +12,7 @@ import requests
 import urllib3
 from mwoauth import ConsumerToken, Handshaker, functions
 from secret import customer_token, secret_token
-
+import mimetypes
 
 app = flask.Flask(__name__)
 app.config["MINIFY_HTML"] = True
@@ -126,16 +126,50 @@ def k8s_pod_del():
     requests.delete(url, cert=k8s_cert, verify=False)
     return 0
 
+EXTENSIONS_WHITE_LIST = (
+    # ".epub",
+    ".fla",
+    ".flac",
+    ".gif",
+    ".jpg",
+    ".jpeg",
+    ".m4a",
+    ".mov",
+    ".mp3",
+    ".mp4",
+    ".oga",
+    ".ogg",
+    ".ogv",
+    ".pdf",
+    ".png",
+    ".svg",
+    ".wav",
+    ".webm",
+    ".webp",
+)
+TEXT_MIME_LIST = (
+    'application/json', 
+    'application/javascript', 
+    'application/xml',
+    'application/yaml',
+    'application/toml',
+    'application/sql',
+    'application/x-sh',
+    'application/x-python',
+    'application/x-ruby'
+)
+
 def guess_mimetype(filename):
     _, ext = os.path.split(filename)
-    if ext in (".txt", ".js", ".css", ".json", ".wikitext", ".py"):
-        return "text/plain"
-    elif ext in (".jpg", ".jpeg"):
-        return "image/jpeg"
-    elif ext == ".png":
-        return "image/png"
-    else:
-        return "application/octet-stream"
+    guessed_mime, encoding = mimetypes.guess_type(filename)
+    if guessed_mime:
+        if ext in EXTENSIONS_WHITE_LIST:
+            return guessed_mime
+        elif guessed_mime.startswith('text/') or guessed_mime in TEXT_MIME_LIST:
+            encoding = encoding or "utf-8"
+            return f"text/plain;charset={encoding}"
+
+    return "application/octet-stream"
     
 
 @app.route("/")
