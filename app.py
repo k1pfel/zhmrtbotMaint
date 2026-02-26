@@ -126,6 +126,17 @@ def k8s_pod_del():
     requests.delete(url, cert=k8s_cert, verify=False)
     return 0
 
+def guess_mimetype(filename):
+    _, ext = os.path.split(filename)
+    if ext in (".txt", ".js", ".css", ".json", ".wikitext", ".py"):
+        return "text/plain"
+    elif ext in (".jpg", ".jpeg"):
+        return "image/jpeg"
+    elif ext == ".png":
+        return "image/png"
+    else:
+        return "application/octet-stream"
+    
 
 @app.route("/")
 def hello():
@@ -133,7 +144,7 @@ def hello():
 
 @app.route("/file/<name>")
 def show(name: str):
-    return flask.send_from_directory(f"{HOME_PATH}/{FILE_DIR}", name, mimetype="image/jpeg")
+    return flask.send_from_directory(f"{HOME_PATH}/{FILE_DIR}", name, mimetype=guess_mimetype(name))
 
 @app.route("/admin", methods=["GET"])
 def portal():
