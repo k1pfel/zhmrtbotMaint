@@ -12,6 +12,8 @@ import requests
 import urllib3
 from mwoauth import ConsumerToken, Handshaker, functions
 from secret import customer_token, secret_token
+import mimetypes
+from werkzeug.utils import secure_filename
 
 
 app = flask.Flask(__name__)
@@ -133,7 +135,16 @@ def hello():
 
 @app.route("/file/<name>")
 def show(name: str):
-    return flask.send_from_directory(f"{HOME_PATH}/{FILE_DIR}", name, mimetype="image/jpeg")
+    dir_path = os.path.join(HOME_PATH, FILE_DIR)
+    filename = secure_filename(name)
+    file_path = os.path.join(dir_path, filename)
+    mime_type, _ = mimetypes.guess_type(file_path)
+    return flask.send_from_directory(
+        dir_path,
+        filename,
+        mimetype=mime_type or "application/octet-stream",
+        as_attachment=filename.rsplit('.', 1)[-1].lower() in {"exe", "sh", "pdf"}
+    )
 
 @app.route("/admin", methods=["GET"])
 def portal():
